@@ -1,13 +1,16 @@
-name: 'Wait'
-description: 'Wait a designated number of milliseconds'
+name: 'Test SwiftPM with xccov'
+author: 'jemmons'
+description: 'Build and test a Swift Package, generating coverage.json'
 inputs:
-  milliseconds:  # id of input
-    description: 'number of milliseconds to wait'
+  package:
+    descrition: 'name of package'
     required: true
-    default: '1000'
 outputs:
-  time: # output will be available to future steps 
-    description: 'The message to output'
+  path:
+    description: 'The path of coverage.json'
 runs:
   using: 'node12'
   main: 'dist/index.js'
+branding:
+  icon: 'check-circle'
+  color: 'orange'

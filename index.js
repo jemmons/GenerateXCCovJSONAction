@@ -1,18 +1,24 @@
 const core = require('@actions/core');
-const wait = require('./wait');
+const exec = require('@actions/exec');
 
 
-// most @actions toolkit packages have async methods
 async function run() {
   try { 
-    const ms = core.getInput('milliseconds');
-    console.log(`Waiting ${ms} milliseconds ...`)
+    const packageName = core.getInput('package');
 
-    core.debug((new Date()).toTimeString())
-    wait(parseInt(ms));
-    core.debug((new Date()).toTimeString())
+    core.startGroup('Generate Project');
+    await exec.exec('swift package generate-xcodeproj --enable-code-coverage');
+    core.endGroup();
+    
+    core.startGroup('Build and Run Tests');
+    await exec.exec('xcodebuild test -scheme ' + packageName + '-Package -resultBundleVersion 3 -resultBundlePath ./build.xcresult');
+    core.endGroup();
+    
+    core.startGroup('Parse Coverage');
+    await exec.exec('xcrun xccov view --report --json ./build.xcresult > coverage.json');
+    core.endGroup();
 
-    core.setOutput('time', new Date().toTimeString());
+    core.setOutput('path', './coverage.json');
   } 
   catch (error) {
     core.setFailed(error.message);
