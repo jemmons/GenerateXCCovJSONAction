@@ -1,24 +1,37 @@
 const core = require('@actions/core');
 const exec = require('@actions/exec');
+const fs = require('fs').promises;
 
 
 async function run() {
   try { 
-    const packageName = core.getInput('package');
-
-    core.startGroup('Generate Project');
-    await exec.exec('swift package generate-xcodeproj --enable-code-coverage');
-    core.endGroup();
+    const resultFile = core.getInput('resultfile', {required: true});
+    const outputPath = core.getInput('outputpath', {required: true});
+    const targets = core.getInput('targets').split(' ').filter(Boolean)
     
-    core.startGroup('Build and Run Tests');
-    await exec.exec('xcodebuild test -scheme ' + packageName + '-Package -resultBundleVersion 3 -resultBundlePath ./build.xcresult');
-    core.endGroup();
-    
-    core.startGroup('Parse Coverage');
-    await exec.exec('xcrun xccov view --report --json ./build.xcresult > coverage.json');
+    core.startGroup('Generate Coverage Report');
+    let rawJSON = '';
+    await exec.exec('xcrun', ['xccov', 'view', '--report', '--json', resultFile], {
+      listeners: {
+        stdout: (data) => {
+          rawJSON += data.toString()
+        }
+      }
+    });
     core.endGroup();
 
-    core.setOutput('path', './coverage.json');
+    core.startGroup('Filter Targets');
+    let json = JSON.parse(rawJSON);
+    let newJSON = json;
+    if (targets != []) {
+      newJSON["targets"] = json["targets"].filter((it) => targets.includes(it.name))
+    } 
+    json = {};
+    core.endGroup();
+
+    core.startGroup('Write coverage JSON');
+    await fs.writeFile(outputPath, JSON.stringify(newJSON));
+    core.endGroup();
   } 
   catch (error) {
     core.setFailed(error.message);

@@ -1,16 +1,19 @@
-name: 'Test SwiftPM with xccov'
+name: 'Generate xccov json'
 author: 'jemmons'
-description: 'Build and test a Swift Package, generating coverage.json'
+description: 'Generate json coverage information with xccov.'
 inputs:
-  package:
-    descrition: 'name of package'
+  resultfile:
+    descrition: 'filepath of .xcresults'
     required: true
-outputs:
-  path:
-    description: 'The path of coverage.json'
+  outputpath:
+    description: 'filepath for json output'
+    required: true
+  targets:
+    description: 'space-seperated list of targets to output (all others will be removed)'
+    required: false
 runs:
   using: 'node12'
   main: 'dist/index.js'
 branding:
-  icon: 'check-circle'
+  icon: 'file-text'
   color: 'orange'
